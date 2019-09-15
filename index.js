@@ -9,15 +9,16 @@ const UrlPattern = require('url-pattern')
 exports.router = async ({ dirname }) => {
   const pkg = require(path.join(dirname, 'package.json'))
   const config = require(path.join(dirname, 'now.json'))
+  config.routes = config.routes || []
 
   const fileList = await glob('**', dirname)
   const files = Object.keys(fileList)
 
   const { builders } = await detectBuilders(files, pkg)
-  const { defaultRoutes } = await detectRoutes(files, builders)
-
-  config.routes = config.routes || []
-  config.routes.push(...defaultRoutes)
+  if (builders) {
+    const { defaultRoutes } = await detectRoutes(files, builders)
+    config.routes.push(...defaultRoutes)
+  }
 
   config.routes.map(route => {
     route.src = new UrlPattern(new RegExp(route.src))
