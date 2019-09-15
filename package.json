@@ -1,0 +1,26 @@
+{
+  "name": "micro-now",
+  "version": "1.0.0",
+  "description": "Local Micro development with Now routing",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "peerDependencies": {
+    "micro": ">=9.0.0"
+  },
+  "author": "Albert Martin <albert@imor.tl>",
+  "license": "MIT",
+  "dependencies": {
+    "@now/build-utils": "^0.10.0",
+    "url-pattern": "^1.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^6.3.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1"
+  }
+}
