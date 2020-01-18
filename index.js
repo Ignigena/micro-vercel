@@ -1,5 +1,7 @@
 const path = require('path')
+/* eslint-disable-next-line */
 const { parse } = require('url')
+/* nodejs/node#12682 */
 
 const { send } = require('micro')
 
