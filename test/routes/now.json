@@ -2,6 +2,7 @@
   "version": 2,
   "routes": [
     { "src": "/users", "dest": "/users-api.js" },
+    { "src": "/users/(\\d+)", "dest": "/users-api.js?id=$1" },
     { "src": "/legacy", "status": 404 }
   ]
 }

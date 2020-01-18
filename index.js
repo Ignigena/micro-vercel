@@ -8,6 +8,16 @@ const { send } = require('micro')
 const { detectBuilders, detectRoutes, glob } = require('@now/build-utils')
 const UrlPattern = require('url-pattern')
 
+function loadHandlerForRoute (dirname, route) {
+  route.src = new UrlPattern(new RegExp(route.src))
+  if (route.dest) {
+    const { query, pathname } = parse(path.join(dirname, route.dest), true)
+    route.dest = require(pathname)
+    route.query = Object.keys(query)
+  }
+  return route
+}
+
 exports.setup = async ({ dirname }) => {
   const pkg = require(path.join(dirname, 'package.json'))
   let config
@@ -29,11 +39,7 @@ exports.setup = async ({ dirname }) => {
     config.routes.push(...defaultRoutes)
   }
 
-  config.routes.map(route => {
-    route.src = new UrlPattern(new RegExp(route.src))
-    route.dest = route.dest && require(path.join(dirname, route.dest))
-    return route
-  })
+  config.routes.map(route => loadHandlerForRoute(dirname, route))
 
   return config
 }
@@ -61,7 +67,7 @@ exports.router = ({ dirname }) => {
 
   return async (req, res) => {
     const config = await setup
-    const { query, pathname } = parse(req.url, true)
+    let { query, pathname } = parse(req.url, true)
 
     const match = config.routes.find(({ src }) => src.match(pathname))
     if (!match || (match.status && !match.dest)) {
@@ -69,6 +75,13 @@ exports.router = ({ dirname }) => {
     }
 
     const params = match.src.match(pathname)
+    if (params.length && match.query.length) {
+      query = match.query.reduce((result, key, index) => {
+        result[key] = params[index]
+        return result
+      }, query)
+    }
+
     match.dest(Object.assign(req, { params, query }), res)
   }
 }
