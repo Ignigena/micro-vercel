@@ -4,6 +4,10 @@ const { parse } = require('url')
 /* nodejs/node#12682 */
 
 const { send } = require('micro')
+const getRawBody = require('raw-body')
+const { parse: parseCookies } = require('cookie')
+const { parse: parseContentType } = require('content-type')
+const { parse: parseQS } = require('qs')
 
 const { detectBuilders, detectRoutes, glob } = require('@now/build-utils')
 const UrlPattern = require('url-pattern')
@@ -42,6 +46,25 @@ exports.setup = async ({ dirname }) => {
   config.routes.map(route => loadHandlerForRoute(dirname, route))
 
   return config
+}
+
+exports.parseBody = (body, type) => {
+  if (!body || !type) return undefined
+
+  switch (parseContentType(type).type) {
+    case 'application/json':
+      try {
+        return JSON.parse(body.toString())
+      } catch (error) {
+        return undefined
+      }
+
+    case 'application/x-www-form-urlencoded':
+      return parseQS(body.toString())
+
+    default:
+      return body.toString()
+  }
 }
 
 /**
@@ -92,6 +115,11 @@ exports.router = ({ dirname }) => {
  * closely resemble production. @see https://www.npmjs.com/package/@now/node
  */
 exports.withHelpers = next => async (req, res) => {
+  const body = await getRawBody(req)
+  req.body = exports.parseBody(body, req.headers['content-type'])
+  req.cookies = parseCookies(req.headers.cookie || '')
+  req.query = Object.assign(req.query || {}, parse(req.url, true).query)
+
   res.status = statusCode => {
     res.statusCode = statusCode
     return res

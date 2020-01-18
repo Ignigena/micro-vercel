@@ -1,7 +1,9 @@
+const assert = require('assert')
 const micro = require('micro')
 const request = require('supertest')
 
 const { withHelpers } = require('../')
+const whoami = require('./zero-config/api/whoami')
 
 describe('withHelpers', () => {
   it('catches application errors', () => {
@@ -9,6 +11,23 @@ describe('withHelpers', () => {
       throw new Error('whoops')
     }))
     return request(handler).get('/').expect(500)
+  })
+
+  it('req: `query`, `cookies` and `body`', async () => {
+    const handler = micro(withHelpers(whoami))
+
+    assert((await Promise.all([
+      request(handler).post('/').send({ who: 'Ignigena' }),
+      request(handler).post('/').send('who=Ignigena'),
+      request(handler).get('/?who=Ignigena'),
+      request(handler).get('/').set('Cookie', ['who=Ignigena'])
+    ])).every(({ text }) => text === 'Hello Ignigena!'))
+
+    assert((await Promise.all([
+      request(handler).get('/'),
+      request(handler).get('/').send('{malformed:[{ json }]}').set('Content-Type', 'application/json'),
+      request(handler).get('/').send('Ignigena').set('Content-Type', 'text/plain')
+    ])).every(({ text }) => text === 'Hello anonymous!'))
   })
 
   describe('res: `send` helper', () => {
