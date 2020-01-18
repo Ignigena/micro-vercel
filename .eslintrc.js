@@ -1,10 +1,8 @@
 module.exports = {
-  root: true,
   env: {
+    mocha: true,
     node: true
   },
-  parserOptions: {
-    parser: 'babel-eslint'
-  },
-  extends: ['standard']
+  extends: ['standard'],
+  plugins: ['mocha']
 }

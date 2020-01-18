@@ -6,9 +6,16 @@ const { send } = require('micro')
 const { detectBuilders, detectRoutes, glob } = require('@now/build-utils')
 const UrlPattern = require('url-pattern')
 
-exports.router = async ({ dirname }) => {
+exports.setup = async ({ dirname }) => {
   const pkg = require(path.join(dirname, 'package.json'))
-  const config = require(path.join(dirname, 'now.json'))
+  let config
+
+  try {
+    config = require(path.join(dirname, 'now.json'))
+  } catch (err) {
+    config = {}
+  }
+
   config.routes = config.routes || []
 
   const fileList = await glob('**', dirname)
@@ -26,7 +33,14 @@ exports.router = async ({ dirname }) => {
     return route
   })
 
-  return (req, res) => {
+  return config
+}
+
+exports.router = ({ dirname }) => {
+  const setup = exports.setup({ dirname })
+
+  return async (req, res) => {
+    const config = await setup
     const { query, pathname } = parse(req.url, true)
 
     const match = config.routes.find(({ src }) => src.match(pathname))
