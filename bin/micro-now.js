@@ -4,8 +4,6 @@ const serve = require('./serve')
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development'
 
-const { router, withHelpers } = require('../')
-
 const flags = mri(process.argv.slice(2), {
   default: {
     host: '::',
@@ -21,6 +19,4 @@ const flags = mri(process.argv.slice(2), {
 
 flags.port = parseInt(flags.port) || 3000
 
-const handler = withHelpers(router({ dirname: flags._[0] || process.cwd() }))
-
-serve(handler, flags)
+serve(flags)
