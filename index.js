@@ -3,8 +3,7 @@ const path = require('path')
 const { parse } = require('url')
 /* nodejs/node#12682 */
 
-const { send } = require('micro')
-const getRawBody = require('raw-body')
+const { json, send, text } = require('micro')
 const { parse: parseCookies } = require('cookie')
 const { parse: parseContentType } = require('content-type')
 const { parse: parseQS } = require('qs')
@@ -48,22 +47,22 @@ exports.setup = async ({ dirname }) => {
   return config
 }
 
-exports.parseBody = (body, type) => {
-  if (!body || !type) return undefined
+exports.parseBody = async (req) => {
+  if (!req || !req.headers['content-type']) return undefined
 
-  switch (parseContentType(type).type) {
+  switch (parseContentType(req.headers['content-type']).type) {
     case 'application/json':
       try {
-        return JSON.parse(body.toString())
-      } catch (error) {
+        return (await json(req))
+      } catch (err) {
         return undefined
       }
 
     case 'application/x-www-form-urlencoded':
-      return parseQS(body.toString())
+      return parseQS(await text(req))
 
     default:
-      return body.toString()
+      return text(req)
   }
 }
 
@@ -115,8 +114,7 @@ exports.router = ({ dirname }) => {
  * closely resemble production. @see https://www.npmjs.com/package/@now/node
  */
 exports.withHelpers = next => async (req, res) => {
-  const body = await getRawBody(req)
-  req.body = exports.parseBody(body, req.headers['content-type'])
+  req.body = await exports.parseBody(req)
   req.cookies = parseCookies(req.headers.cookie || '')
   req.query = Object.assign(req.query || {}, parse(req.url, true).query)
 
