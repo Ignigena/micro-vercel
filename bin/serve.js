@@ -1,6 +1,7 @@
 const getPort = require('get-port')
 const serve = require('micro/lib')
 const log = require('micro-dev/lib/log')
+const path = require('path')
 
 const { router, withHelpers } = require('../')
 
@@ -9,7 +10,12 @@ const listening = require('./listening')
 module.exports = async (flags, restarting) => {
   if (restarting) process.emit('SIGUSR2')
 
-  const handler = withHelpers(router({ dirname: flags._[0] || process.cwd() }))
+  let dirname = process.cwd()
+  if (flags._[0]) {
+    dirname = flags._[0].match(/^\w+:/) || flags._[0].match(/^\//) ? flags._[0] : path.resolve(dirname, flags._[0])
+  }
+
+  const handler = withHelpers(router({ dirname }))
 
   const module = flags.silent ? handler : log(handler, flags.limit)
   const server = serve(module)
