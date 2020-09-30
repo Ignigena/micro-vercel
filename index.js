@@ -15,7 +15,12 @@ function loadHandlerForRoute (dirname, route) {
   route.src = new UrlPattern(new RegExp(route.src))
   if (route.dest) {
     const { query, pathname } = parse(path.join(dirname, route.dest), true)
-    route.dest = require(pathname)
+    try {
+      route.dest = require(pathname)
+    } catch (err) {
+      delete route.dest
+      route.status = 500
+    }
     route.query = Object.keys(query)
   }
   return route
