@@ -8,7 +8,7 @@ const { parse: parseCookies } = require('cookie')
 const { parse: parseContentType } = require('content-type')
 const { parse: parseQS } = require('qs')
 
-const { detectBuilders, detectRoutes, glob } = require('@now/build-utils')
+const { detectBuilders, glob } = require('@vercel/build-utils')
 const UrlPattern = require('url-pattern')
 
 function loadHandlerForRoute (dirname, route) {
@@ -36,11 +36,8 @@ exports.setup = async ({ dirname }) => {
   const fileList = await glob('**', dirname)
   const files = Object.keys(fileList)
 
-  const { builders } = await detectBuilders(files, pkg)
-  if (builders) {
-    const { defaultRoutes } = await detectRoutes(files, builders)
-    config.routes.push(...defaultRoutes)
-  }
+  const { defaultRoutes } = await detectBuilders(files, pkg)
+  config.routes.push(...defaultRoutes || [])
 
   config.routes.map(route => loadHandlerForRoute(dirname, route))
 
