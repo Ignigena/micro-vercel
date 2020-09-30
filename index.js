@@ -9,6 +9,7 @@ const { parse: parseContentType } = require('content-type')
 const { parse: parseQS } = require('qs')
 
 const { detectBuilders, glob } = require('@vercel/build-utils')
+const { getTransformedRoutes } = require('@vercel/routing-utils')
 const UrlPattern = require('url-pattern')
 
 function loadHandlerForRoute (dirname, route) {
@@ -36,7 +37,10 @@ exports.setup = async ({ dirname }) => {
     config = {}
   }
 
-  config.routes = config.routes || []
+  const { error, routes } = getTransformedRoutes({ nowConfig: config })
+  if (error) console.error(error)
+
+  config.routes = routes || []
 
   const fileList = await glob('**', dirname)
   const files = Object.keys(fileList)
@@ -93,7 +97,15 @@ exports.router = ({ dirname }) => {
     const config = await setup
     let { query, pathname } = parse(req.url, true)
 
-    const match = config.routes.find(({ src }) => src.match(pathname))
+    const match = config.routes.find(route => {
+      // @TODO: Implement route pass through for headers, etc.
+      if (route.continue) return false
+      // @TODO: Implement filesystem pass through
+      if (route.handle === 'filesystem') return false
+
+      return route.src.match(pathname)
+    })
+
     if (!match || (match.status && !match.dest)) {
       return send(res, (match && match.status) || 404)
     }
