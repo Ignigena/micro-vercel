@@ -15,8 +15,8 @@
   "author": "Albert Martin <albert@imor.tl>",
   "license": "MIT",
   "dependencies": {
-    "@vercel/build-utils": "^2.5.3",
-    "@vercel/routing-utils": "^1.8.4",
+    "@vercel/build-utils": "^2.11.1",
+    "@vercel/routing-utils": "^1.11.2",
     "cookie": "^0.4.1",
     "micro-dev": "^3.0.0",
     "qs": "^6.9.4",
