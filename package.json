@@ -1,10 +1,10 @@
 {
-  "name": "micro-now",
+  "name": "micro-vercel",
   "version": "1.0.0",
-  "description": "Local Micro development with Now routing",
+  "description": "Local Micro development with Vercel routing",
   "main": "index.js",
   "bin": {
-    "micro-now": "./bin/micro-now.js"
+    "vc-micro": "./bin/vc-micro.js"
   },
   "scripts": {
     "test": "nyc mocha"

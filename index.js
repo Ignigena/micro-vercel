@@ -32,7 +32,7 @@ exports.setup = async ({ dirname }) => {
   let config
 
   try {
-    config = require(path.join(dirname, 'now.json'))
+    config = require(path.join(dirname, 'vercel.json'))
   } catch (err) {
     config = {}
   }
@@ -123,9 +123,9 @@ exports.router = ({ dirname }) => {
 }
 
 /**
- * The Node runtime used on ZEIT Now has a few convenience methods added. This
+ * The Node runtime used on Vercel has a few convenience methods added. This
  * higher order function modifies the request and response objects to more
- * closely resemble production. @see https://www.npmjs.com/package/@now/node
+ * closely resemble production. @see https://www.npmjs.com/package/@vercel/node
  */
 exports.withHelpers = next => async (req, res) => {
   req.body = await exports.parseBody(req)
