@@ -3,10 +3,8 @@ const path = require('path')
 const { parse } = require('url')
 /* nodejs/node#12682 */
 
-const { json, send, text } = require('micro')
-const { parse: parseCookies } = require('cookie')
-const { parse: parseContentType } = require('content-type')
-const { parse: parseQS } = require('qs')
+const { send } = require('micro')
+const { withMiddleware } = require('@nautilus/micro')
 
 const { detectBuilders, glob } = require('@vercel/build-utils')
 const { getTransformedRoutes } = require('@vercel/routing-utils')
@@ -53,43 +51,6 @@ exports.setup = async ({ dirname }) => {
   return config
 }
 
-exports.parseBody = async (req) => {
-  if (!req || !req.headers['content-type']) return undefined
-
-  switch (parseContentType(req.headers['content-type']).type) {
-    case 'application/json':
-      try {
-        return (await json(req))
-      } catch (err) {
-        return undefined
-      }
-
-    case 'application/x-www-form-urlencoded':
-      return parseQS(await text(req))
-
-    default:
-      return text(req)
-  }
-}
-
-/**
- * Send a JSON response with correct headers. When run locally the JSON will
- * be sent with extra spacing to be more human-readable.
- */
-exports.json = (req, res) => jsonBody => {
-  const body = JSON.stringify(jsonBody, null, 2)
-
-  if (!res.getHeader('content-type')) {
-    res.setHeader('content-type', 'application/json; charset=utf-8')
-  }
-
-  return res.send(body)
-}
-
-exports.send = (req, res) => body => {
-  send(res, res.statusCode, body)
-}
-
 exports.router = ({ dirname }) => {
   const setup = exports.setup({ dirname })
 
@@ -127,21 +88,4 @@ exports.router = ({ dirname }) => {
  * higher order function modifies the request and response objects to more
  * closely resemble production. @see https://www.npmjs.com/package/@vercel/node
  */
-exports.withHelpers = next => async (req, res) => {
-  req.body = await exports.parseBody(req)
-  req.cookies = parseCookies(req.headers.cookie || '')
-  req.query = Object.assign(req.query || {}, parse(req.url, true).query)
-
-  res.status = statusCode => {
-    res.statusCode = statusCode
-    return res
-  }
-  res.send = exports.send(req, res)
-  res.json = exports.json(req, res)
-
-  try {
-    await next(req, res)
-  } catch (err) {
-    send(res, err.statusCode || 500, err.message)
-  }
-}
+exports.withHelpers = withMiddleware(['response', 'errors', 'parse'])

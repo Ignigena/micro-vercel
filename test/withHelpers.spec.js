@@ -1,16 +1,19 @@
 const assert = require('assert')
 const micro = require('micro')
+const { stub } = require('sinon')
 const request = require('supertest')
 
 const { withHelpers } = require('../')
 const whoami = require('./zero-config/api/whoami')
 
 describe('withHelpers', () => {
-  it('catches application errors', () => {
+  it('catches application errors', async () => {
+    const logger = stub(console, 'error')
     const handler = micro(withHelpers((req, res) => {
       throw new Error('whoops')
     }))
-    return request(handler).get('/').expect(500)
+    await request(handler).get('/').expect(500)
+    logger.restore()
   })
 
   it('req: `query`, `cookies` and `body`', async () => {

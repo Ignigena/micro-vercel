@@ -15,11 +15,10 @@
   "author": "Albert Martin <albert@imor.tl>",
   "license": "MIT",
   "dependencies": {
+    "@nautilus/micro": "^0.3.0",
     "@vercel/build-utils": "^2.11.1",
     "@vercel/routing-utils": "^1.11.2",
-    "cookie": "^0.4.1",
     "micro-dev": "^3.0.0",
-    "qs": "^6.9.4",
     "url-pattern": "^1.0.3"
   },
   "devDependencies": {
