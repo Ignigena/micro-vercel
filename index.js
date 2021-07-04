@@ -1,7 +1,4 @@
 const path = require('path')
-/* eslint-disable-next-line */
-const { parse } = require('url')
-/* nodejs/node#12682 */
 
 const { send } = require('micro')
 const { withMiddleware } = require('@nautilus/micro')
@@ -13,14 +10,14 @@ const UrlPattern = require('url-pattern')
 function loadHandlerForRoute (dirname, route) {
   route.src = new UrlPattern(new RegExp(route.src))
   if (route.dest) {
-    const { query, pathname } = parse(path.join(dirname, route.dest), true)
+    const [base, query] = route.dest.split('?')
     try {
-      route.dest = require(pathname)
+      route.dest = require(path.join(dirname, base))
     } catch (err) {
       delete route.dest
       route.status = 500
     }
-    route.query = Object.keys(query)
+    route.query = Array.from(new URLSearchParams(query).keys())
   }
   return route
 }
@@ -56,7 +53,7 @@ exports.router = ({ dirname }) => {
 
   return async (req, res) => {
     const config = await setup
-    let { query, pathname } = parse(req.url, true)
+    const { searchParams, pathname } = new URL(req.url, `http://${req.headers.host}`)
 
     const match = config.routes.find(route => {
       // @TODO: Implement route pass through for headers, etc.
@@ -72,14 +69,9 @@ exports.router = ({ dirname }) => {
     }
 
     const params = match.src.match(pathname)
-    if (params.length && match.query.length) {
-      query = match.query.reduce((result, key, index) => {
-        result[key] = params[index]
-        return result
-      }, query)
-    }
+    match.query.forEach((key, index) => searchParams.set(key, params[index]))
 
-    match.dest(Object.assign(req, { params, query }), res)
+    match.dest(Object.assign(req, { params, query: Object.fromEntries(searchParams) }), res)
   }
 }
 
