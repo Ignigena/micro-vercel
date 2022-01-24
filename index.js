@@ -1,6 +1,6 @@
 const path = require('path')
 
-const { send } = require('micro')
+const serve = require('serve-handler')
 const { withMiddleware } = require('@nautilus/micro')
 
 const { detectBuilders, glob } = require('@vercel/build-utils')
@@ -65,7 +65,7 @@ exports.router = ({ dirname }) => {
     })
 
     if (!match || (match.status && !match.dest)) {
-      return send(res, (match && match.status) || 404)
+      return serve(req, res, { directoryListing: false, public: dirname + '/public' })
     }
 
     const params = match.src.match(pathname)
