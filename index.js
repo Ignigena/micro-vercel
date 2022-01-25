@@ -27,8 +27,6 @@ exports.setup = async ({ dirname }) => {
     return route
   })
 
-  console.log(config.routes)
-
   return config
 }
 

@@ -7,6 +7,14 @@ const path = require('path')
 
 const { router, withHelpers } = require('../')
 
+const clearCache = filePath => {
+  const cached = require.cache[filePath]
+  if (!cached) return
+
+  if (cached.parent) clearCache(cached.parent.id)
+  delete require.cache[filePath]
+}
+
 module.exports = async (flags) => {
   let dirname = process.cwd()
   if (flags._[0]) {
@@ -35,7 +43,7 @@ module.exports = async (flags) => {
     console.log(
       `\n${chalk.blue('File changed:')} ${path.relative(process.cwd(), filePath)} - Clearing module cache...`
     )
-    delete require.cache[filePath]
+    clearCache(filePath)
   })
 
   const handler = withHelpers(router({ dirname }))
