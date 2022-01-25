@@ -1,5 +1,4 @@
 const assert = require('assert')
-const micro = require('micro')
 const { stub } = require('sinon')
 const request = require('supertest')
 
@@ -9,15 +8,15 @@ const whoami = require('./zero-config/api/whoami')
 describe('withHelpers', () => {
   it('catches application errors', async () => {
     const logger = stub(console, 'error')
-    const handler = micro(withHelpers((req, res) => {
+    const handler = withHelpers((req, res) => {
       throw new Error('whoops')
-    }))
+    })
     await request(handler).get('/').expect(500)
     logger.restore()
   })
 
   it('req: `query`, `cookies` and `body`', async () => {
-    const handler = micro(withHelpers(whoami))
+    const handler = withHelpers(whoami)
 
     assert((await Promise.all([
       request(handler).post('/').send({ who: 'Ignigena' }),
@@ -35,29 +34,29 @@ describe('withHelpers', () => {
 
   describe('res: `send` helper', () => {
     it('works with minimal setup', () => {
-      const handler = micro(withHelpers((req, res) => res.send('ok')))
+      const handler = withHelpers((req, res) => res.send('ok'))
       return request(handler).get('/').expect(200)
     })
 
     it('preserves application status code', () => {
-      const handler = micro(withHelpers((req, res) => res.status(404).send('not found')))
+      const handler = withHelpers((req, res) => res.status(404).send('not found'))
       return request(handler).get('/').expect(404)
     })
   })
 
   describe('res: `json` helper', () => {
     it('appends the correct headers', () => {
-      const handler = micro(withHelpers((req, res) => res.json({ hello: 'world' })))
+      const handler = withHelpers((req, res) => res.json({ hello: 'world' }))
       return request(handler).get('/')
         .expect(200)
         .expect('content-type', 'application/json; charset=utf-8')
     })
 
     it('preserves application headers', async () => {
-      const handler = micro(withHelpers((req, res) => {
+      const handler = withHelpers((req, res) => {
         res.setHeader('content-type', 'application/ld+json')
         res.json({ hello: 'world' })
-      }))
+      })
       return request(handler).get('/')
         .expect(200)
         .expect('content-type', 'application/ld+json')

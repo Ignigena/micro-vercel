@@ -5,7 +5,7 @@ const { router, withHelpers } = require('../')
 
 describe('router', () => {
   it('parses manual router configuration', async () => {
-    const handler = router({ dirname: path.resolve(__dirname, './routes') })
+    const handler = withHelpers(router({ dirname: path.resolve(__dirname, './routes') }))
 
     await request(handler).get('/users').expect(200)
     await request(handler).get('/legacy').expect(404)
