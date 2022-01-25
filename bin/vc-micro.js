@@ -6,14 +6,11 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development'
 
 const flags = mri(process.argv.slice(2), {
   default: {
-    host: '::',
-    limit: '1mb'
+    host: '::'
   },
   alias: {
     p: 'port',
-    H: 'host',
-    l: 'limit',
-    s: 'silent'
+    H: 'host'
   }
 })
 

@@ -46,7 +46,7 @@ module.exports = async (flags) => {
     clearCache(filePath)
   })
 
-  const handler = withHelpers(router({ dirname }))
+  const handler = flags['disable-helpers'] ? router({ dirname }) : withHelpers(router({ dirname }))
   return http.createServer(handler).listen(await getPort(flags), function () {
     const { address, port } = this.address()
     const localHost = `http://${address === '::' ? 'localhost' : address}:${port}`
