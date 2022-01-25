@@ -7,35 +7,14 @@ const { detectBuilders, glob } = require('@vercel/build-utils')
 const { getTransformedRoutes } = require('@vercel/routing-utils')
 const UrlPattern = require('url-pattern')
 
-function loadHandlerForRoute (dirname, route) {
-  route.src = new UrlPattern(new RegExp(route.src))
-  if (route.dest) {
-    const [base, query] = route.dest.split('?')
-    try {
-      route.dest = require(path.join(dirname, base))
-    } catch (err) {
-      delete route.dest
-      route.status = 500
-    }
-    route.query = Array.from(new URLSearchParams(query).keys())
-  }
-  return route
-}
-
 exports.setup = async ({ dirname }) => {
   const pkg = require(path.join(dirname, 'package.json'))
-  let config
+  const config = { routes: [] }
 
   try {
-    config = require(path.join(dirname, 'vercel.json'))
-  } catch (err) {
-    config = {}
-  }
-
-  const { error, routes } = getTransformedRoutes({ nowConfig: config })
-  if (error) console.error(error)
-
-  config.routes = routes || []
+    const { routes } = getTransformedRoutes({ nowConfig: require(path.join(dirname, 'vercel.json')) })
+    config.routes = routes
+  } catch (err) {}
 
   const fileList = await glob('**', dirname)
   const files = Object.keys(fileList)
@@ -43,7 +22,12 @@ exports.setup = async ({ dirname }) => {
   const { defaultRoutes } = await detectBuilders(files, pkg)
   config.routes.push(...defaultRoutes || [])
 
-  config.routes.map(route => loadHandlerForRoute(dirname, route))
+  config.routes.map(route => {
+    route.src = new UrlPattern(new RegExp(route.src))
+    return route
+  })
+
+  console.log(config.routes)
 
   return config
 }
@@ -65,13 +49,26 @@ exports.router = ({ dirname }) => {
     })
 
     if (!match || (match.status && !match.dest)) {
-      return serve(req, res, { directoryListing: false, public: dirname + '/public' })
+      res.statusCode = match.status || 404
+      return res.end()
     }
 
-    const params = match.src.match(pathname)
-    match.query.forEach((key, index) => searchParams.set(key, params[index]))
+    const [base, query] = match.dest.split('?')
 
-    match.dest(Object.assign(req, { params, query: Object.fromEntries(searchParams) }), res)
+    const params = match.src.match(pathname)
+    Array.from(new URLSearchParams(query).keys()).forEach((key, index) => searchParams.set(key, params[index]))
+
+    try {
+      if (match.dest.startsWith('/public')) {
+        return serve(req, res, { directoryListing: false, public: dirname + '/public' })
+      }
+
+      require(path.join(dirname, base))(Object.assign(req, { params, query: Object.fromEntries(searchParams) }), res)
+    } catch (err) {
+      console.error(err)
+      res.statusCode = 500
+      res.end()
+    }
   }
 }
 

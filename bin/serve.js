@@ -38,7 +38,8 @@ module.exports = async (flags) => {
     delete require.cache[filePath]
   })
 
-  return http.createServer((req, res) => withHelpers(router({ dirname }))(req, res)).listen(await getPort(flags), function () {
+  const handler = withHelpers(router({ dirname }))
+  return http.createServer(handler).listen(await getPort(flags), function () {
     const { address, port } = this.address()
     const localHost = `http://${address === '::' ? 'localhost' : address}:${port}`
     console.log(`${chalk.green('🚀 Server ready at:')} ${localHost}`)
