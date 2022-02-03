@@ -51,5 +51,11 @@ module.exports = async (flags) => {
     const { address, port } = this.address()
     const localHost = `http://${address === '::' ? 'localhost' : address}:${port}`
     console.log(`${chalk.green('🚀 Server ready at:')} ${localHost}`)
+
+    process.on('SIGINT', () => {
+      this.close()
+      console.log(chalk.red(' Server shut down.'))
+      process.exit(0)
+    })
   })
 }
