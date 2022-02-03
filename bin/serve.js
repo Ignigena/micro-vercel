@@ -54,6 +54,7 @@ module.exports = async (flags) => {
 
     process.on('SIGINT', () => {
       this.close()
+      watcher.close()
       console.log(chalk.red(' Server shut down.'))
       process.exit(0)
     })
