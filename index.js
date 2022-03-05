@@ -13,7 +13,7 @@ exports.setup = async ({ dirname }) => {
 
   try {
     const { routes } = getTransformedRoutes({ nowConfig: require(path.join(dirname, 'vercel.json')) })
-    config.routes = routes
+    config.routes = routes || []
   } catch (err) {}
 
   const fileList = await glob('**', dirname)
