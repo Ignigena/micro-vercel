@@ -16,8 +16,8 @@
   },
   "dependencies": {
     "@nautilus/micro": "^0.4.5",
-    "@vercel/build-utils": "^2.13.0",
-    "@vercel/routing-utils": "^1.11.3",
+    "@vercel/build-utils": "^4.2.1",
+    "@vercel/routing-utils": "^2.0.2",
     "chalk": "^4.1.2",
     "chokidar": "^3.5.3",
     "get-port": "^5.1.1",

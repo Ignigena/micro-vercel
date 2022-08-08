@@ -12,7 +12,7 @@ exports.setup = async ({ dirname }) => {
   const config = { routes: [] }
 
   try {
-    const { routes } = getTransformedRoutes({ nowConfig: require(path.join(dirname, 'vercel.json')) })
+    const { routes } = getTransformedRoutes(require(path.join(dirname, 'vercel.json')))
     config.routes = routes || []
   } catch (err) {}
 
@@ -23,7 +23,7 @@ exports.setup = async ({ dirname }) => {
   config.routes.push(...defaultRoutes || [])
 
   config.routes.map(route => {
-    route.src = new UrlPattern(new RegExp(route.src))
+    route.src = new UrlPattern(new RegExp(`^${route.src}$`))
     return route
   })
 
@@ -35,25 +35,37 @@ exports.router = ({ dirname }) => {
 
   return async (req, res) => {
     const config = await setup
+
     const { searchParams, pathname } = new URL(req.url, `http://${req.headers.host}`)
 
-    const match = config.routes.find(route => {
-      // @TODO: Implement route pass through for headers, etc.
-      if (route.continue) return false
-      // @TODO: Implement filesystem pass through
-      if (route.handle === 'filesystem') return false
+    function findMatchingRoute (forPath) {
+      const match = config.routes.find(route => {
+        // @TODO: Implement route pass through for headers, etc.
+        if (route.continue) return false
+        // @TODO: Implement filesystem pass through
+        if (route.handle === 'filesystem') return false
 
-      return route.src.match(pathname)
-    })
+        return route.src.match(forPath)
+      })
+
+      if (!match?.check) {
+        const params = match?.src?.match(forPath)
+        return { match, params }
+      }
+
+      // Handle rewrites
+      const rewrite = forPath.replace(match.src.regex, match.dest)
+      return findMatchingRoute(rewrite)
+    }
+
+    const { match, params } = findMatchingRoute(pathname)
 
     if (!match || (match.status && !match.dest)) {
-      res.statusCode = match.status || 404
+      res.statusCode = match?.status || 404
       return res.end()
     }
 
     const [base, query] = match.dest.split('?')
-
-    const params = match.src.match(pathname)
     Array.from(new URLSearchParams(query).keys()).forEach((key, index) => searchParams.set(key, params[index]))
 
     try {
