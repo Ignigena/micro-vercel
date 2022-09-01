@@ -21,8 +21,8 @@ describe('router', () => {
 
   it('rewrites routes to the appropriate handler', async () => {
     const handler = withHelpers(router({ dirname: path.resolve(__dirname, './rewrites') }))
-    // await request(handler).get('/api/users').expect(200)
     await request(handler).get('/v1/users').expect(200)
+    await request(handler).get('/user/1').expect(200).expect('user 1')
   })
 
   it('falls back to static routing', async () => {

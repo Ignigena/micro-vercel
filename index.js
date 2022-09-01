@@ -23,7 +23,7 @@ exports.setup = async ({ dirname }) => {
   config.routes.push(...defaultRoutes || [])
 
   config.routes.map(route => {
-    route.src = new UrlPattern(new RegExp(`^${route.src}$`))
+    route.src = new UrlPattern(new RegExp(route.src))
     return route
   })
 
@@ -49,24 +49,30 @@ exports.router = ({ dirname }) => {
       })
 
       if (!match?.check) {
-        const params = match?.src?.match(forPath)
-        return { match, params }
+        return {
+          match,
+          params: match?.src?.match(forPath),
+          forPath
+        }
       }
 
       // Handle rewrites
       const rewrite = forPath.replace(match.src.regex, match.dest)
-      return findMatchingRoute(rewrite)
+      return findMatchingRoute(rewrite, forPath)
     }
 
-    const { match, params } = findMatchingRoute(pathname)
+    const { match, params, forPath } = findMatchingRoute(pathname)
+    const destQuery = forPath.includes('?') ? new URLSearchParams(forPath.split('?').pop()) : null
 
     if (!match || (match.status && !match.dest)) {
       res.statusCode = match?.status || 404
       return res.end()
     }
 
-    const [base, query] = match.dest.split('?')
-    Array.from(new URLSearchParams(query).keys()).forEach((key, index) => searchParams.set(key, params[index]))
+    const [base, matchQuery] = match.dest.split('?')
+    Array.from(
+      destQuery?.keys() ?? new URLSearchParams(matchQuery).keys()
+    ).forEach((key, index) => searchParams.set(key, destQuery?.get(key) ?? params[index]))
 
     try {
       if (match.dest.startsWith('/public')) {
