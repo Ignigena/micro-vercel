@@ -1,0 +1,6 @@
+.*
+.github/
+.nyc*
+coverage/
+test/
+*.spec.js
