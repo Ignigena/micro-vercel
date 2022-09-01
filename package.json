@@ -1,6 +1,6 @@
 {
   "name": "micro-vercel",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Local Micro development with Vercel routing",
   "main": "index.js",
   "bin": {
